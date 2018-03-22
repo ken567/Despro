@@ -9,6 +9,12 @@
 #define DHTPIN1 4
 #define DHTPIN2 5
 #define DHTTYPE DHT22
+#ifndef HAVE_HWSERIAL1
+SoftwareSerial Serial1(10, 11); 
+#endif
+#ifndef HAVE_HWSERIAL2
+SoftwareSerial Serial2(12, 13);
+#endif
 
 String date1,date2,time1,hData,tData,ipAdd,latData,longData,mes,mm,hr,mes1,in,id,hr2;  
 String mac = "0A-00-00-00-25-73";
@@ -97,10 +103,10 @@ void getTime(){
   while(Serial2.available()>0)
   if (gps.encode(Serial2.read()))
   
-  if(gps.location.isValid()){
+  /*if(gps.location.isValid()){
     latData = String(gps.location.lat(), 6);
     longData = String(gps.location.lng(), 6);
-  }
+  }*/
   if (gps.date.isValid()){
     mon = String(gps.date.month());
     dy = String(gps.date.day());
@@ -195,18 +201,13 @@ void displayInfo(){
     Serial.println(longData);
     lcd.setCursor(0,1);
     lcd.print(date1+" "+time1);
-    
-    if(gps.location.isValid()){
       latData = String(latitude, 6);
       longData = String(longitude, 6);
       lcd.setCursor(0,2);
       lcd.print(latData);
       lcd.setCursor(0,3);
       lcd.print(longData);
-    }else{
-      lcd.setCursor(0,2);
-      lcd.print("Detecting Location");
-    }
+    
   }
 }
 void connectWiFi(){
