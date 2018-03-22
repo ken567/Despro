@@ -9,12 +9,6 @@
 #define DHTPIN1 4
 #define DHTPIN2 5
 #define DHTTYPE DHT22
-#ifndef HAVE_HWSERIAL1
-SoftwareSerial Serial1(10, 11); 
-#endif
-#ifndef HAVE_HWSERIAL2
-SoftwareSerial Serial2(12, 13);
-#endif
 
 String date1,date2,time1,hData,tData,ipAdd,latData,longData,mes,mm,hr,mes1,in,id,hr2;  
 String mac = "0A-00-00-00-25-73";
