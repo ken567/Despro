@@ -32,6 +32,8 @@ DHT dht2(DHTPIN2, DHTTYPE);
 
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
+extern volatile unsigned long timer0_millis;
+
 const byte ROWS = 4;
 const byte COLS = 4;
 
@@ -58,6 +60,7 @@ void setup(){
   int len = in.length() + 1; 
   wifi4();
 }
+void(* resetFunc) (void) = 0;
 void loop(){
  char key =  keypad.getKey();
  unsigned long timeElapsed = millis();
@@ -135,6 +138,7 @@ void getTempHumid() {
   }
 }
 void transmitData(){
+  char stat2 = Serial.read();
   String data = "temp=" + tData + "&humidity=" + hData;
   String data2 = "&long="+longData+"&lat="+latData;
   lcd.clear();
@@ -152,12 +156,25 @@ void transmitData(){
     client.println("Connection: close");
     client.println();
     client.println();
-    client.stop();  
-    delay(90000);
+    if(stat == "[WiFiEsp] Data packet send error (2)" || stat =="[WiFiEsp] Failed to write to socket 3" ){
+      lcd.setCursor(0,0);
+      lcd.print("Error");
+      if(WiFi.status() == WL_DISCONNECTED || WiFi.status() == 3){
+        wifi4();
+      }
+      else{
+        transmitData();
+      }
+    }
+    else{
+      client.stop();
+      lcd.clear();
+      lcd.setCursor(0,0);
+      lcd.print("Data Sent");
+      resetCounter(); 
+    }  
+    delay(500);
     lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.println("Data Sent");
-    lcd.clear();  
   }
   else{
     lcd.setCursor(0,0);
@@ -185,7 +202,6 @@ void displayInfo(){
       lcd.print(latData);
       lcd.setCursor(0,3);
       lcd.print(longData);
-    
 }
 void wifi4(){
   Serial1.begin(9600);
@@ -224,8 +240,13 @@ void user(char key){
      }
      else if(key == 'C'){
        transmitData();
-       //resetCounter();
+       resetCounter();
        loop();
      }
    }
+}
+void resetCounter(){
+  noInterrupts ();
+  timer0_millis = 0;
+  interrupts ();
 }
