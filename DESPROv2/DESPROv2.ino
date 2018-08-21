@@ -18,7 +18,7 @@ SoftwareSerial Serial2(12, 13);
 
 String date1,date2,time1,hData,tData,ipAdd,latData,longData,mes,mm,hr,mes1,in,id,hr2;  
 String mac = "0A-00-00-00-25-73";
-char ssid[] = "Dulay55";            
+char ssid[] = "Dulay56";            
 char pass[] = "123456798"; 
 char buf1[20];       
 int status = WL_IDLE_STATUS;
@@ -56,46 +56,24 @@ void setup(){
   lcd.begin(20,4);
   analogWrite(6,350);
   int len = in.length() + 1; 
-  connectWiFi();
-  
- if(WiFi.status() == 3){
-     lcd.clear();
-     lcd.setCursor(0,0);
-     lcd.print("Enter Password");
-  }
+  wifi4();
 }
 void loop(){
  char key =  keypad.getKey();
- 
+ unsigned long timeElapsed = millis();
  getTime();
- //
- 
- if(WiFi.status() == 3){ 
-    if(key != NO_KEY){
-      lcd.setCursor(0,1);
-      input(key);
-    }
- }else if(WiFi.status() == WL_CONNECTED){
+ if(WiFi.status() == WL_CONNECTED){
+   Serial.println(timeElapsed); 
    getTempHumid();
    displayInfo();
-   if(key != NO_KEY){
-     if(key == 'A'){
-       lcd.clear();
-       delay(500);
-       loop();
-     }
-     else if(key == 'B'){
-       lcd.clear();
-       loop();
-     }
-     else if(key == 'C'){
-       transmitData();
-       loop();
-     }
-   }
-   if(mm == "00" && hr2 != "00"){
+   user(key);
+   if(timeElapsed > 1800000){
     transmitData();
-   }
+    resetCounter();
+   } 
+ }
+ else if(WiFi.status() == WL_DISCONNECTED){
+  wifi4();
  }
 }
 void getTime(){
@@ -208,76 +186,46 @@ void displayInfo(){
       lcd.setCursor(0,3);
       lcd.print(longData);
     
-  }
 }
-void connectWiFi(){
-  in.toCharArray(pass,in.length()+1);
-  
-  WiFi.init(&Serial1);
-  //listNetworks();
+void wifi4(){
+  Serial1.begin(9600);
+    WiFi.init(&Serial1);
+
+  // check for the presence of the shield
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("WiFi shield not present");
     // don't continue
-    //digitalWrite(22,LOW);
+    while (true);
   }
-  if( status != WL_CONNECTED) {
+  
+  //WiFi.disconnect();
+  // attempt to connect to WiFi network
+  while ( WiFi.status() != WL_CONNECTED) {
     Serial.print("Attempting to connect to WPA SSID: ");
     Serial.println(ssid);
-    lcd.setCursor(0,0);
-    lcd.print("Connecting to: ");
-    lcd.setCursor(0,1);
-    lcd.print(ssid);
-    status = WiFi.begin(ssid,pass);
+    // Connect to WPA/WPA2 network
+    status = WiFi.begin(ssid, pass);
   }
-
-  lcd.clear();
-  Serial.print(in);
+  //status = WL_CONNECTED;
+  Serial.println("You're connected to the network");
 }
-void listNetworks(){
-  
-  int numSsid = WiFi.scanNetworks();
-  while (numSsid == -1) {
-    Serial.println("Couldn't get a wifi connection");
-    listNetworks();
-  }
-
-  for (int thisNet = 1; thisNet < 2; thisNet++) {
-    id = String(WiFi.SSID(thisNet));
-    Serial.println(id);
-    id.toCharArray(ssid,id.length()+1);
-  }
-}
-void printMacAddress(){
-
-  byte mac[6];
-  WiFi.macAddress(mac);
-  
-  char buf[20];
-  sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X", mac[5], mac[4], mac[3], mac[2], mac[1], mac[0]);
-}
-void input(char key){
-      String l = String(in.length());
-      String pas;
-      int passLength,len;
-    if(key){
-      if(key != 'D' && key != '='){
-        in+=key;
-        passLength = in.length();
-        lcd.setCursor(15 - passLength, 1  );//to ignore whitespace
-        lcd.print(in);
-        Serial.println("L: " + l);
-        Serial.println(in);
-      }
-      else if(key == 'D'){
-        in = "";
-        lcd.clear();
-        delay(500);
-        setup();
-      }
-      else if(key == '='){
-        lcd.clear();
-        setup();
-      }
-      
-    }
+void user(char key){
+  String pass2 = "*";
+   if(key != NO_KEY){
+   if(key == 'A'){
+       lcd.clear();
+       delay(500);
+       loop();
+     }
+     else if(key == 'B'){
+       lcd.clear();
+       delay(200);
+       resetFunc();
+     }
+     else if(key == 'C'){
+       transmitData();
+       //resetCounter();
+       loop();
+     }
+   }
 }
